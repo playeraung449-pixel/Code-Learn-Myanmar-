@@ -1,0 +1,304 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", "Noto Sans Myanmar", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Outfit", "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* =========================================================================
+   CORE DESIGN SYSTEM & COMPONENT UTILITIES
+   ========================================================================= */
+
+:root {
+  --clm-primary: #2563EB;
+  --clm-primary-hover: #1D4ED8;
+  --clm-success: #10B981;
+  --clm-warning: #F59E0B;
+  --clm-error: #EF4444;
+  --clm-premium: #F59E0B;
+}
+
+/* Futuristic Ambient Grid */
+.clm-futuristic-grid {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(148, 163, 184, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(148, 163, 184, 0.04) 1px, transparent 1px);
+}
+
+.dark .clm-futuristic-grid {
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+}
+
+/* Unified Card System */
+.clm-card {
+  @apply bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200;
+}
+
+.clm-card-futuristic {
+  @apply bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-800/80 rounded-2xl shadow-lg relative overflow-hidden transition-all duration-200;
+}
+
+.clm-card-interactive {
+  @apply bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 hover:border-blue-400 dark:hover:border-blue-500/50 hover:-translate-y-0.5 cursor-pointer;
+}
+
+.clm-card-premium {
+  @apply bg-gradient-to-b from-amber-500/5 to-slate-900 border border-amber-500/30 rounded-2xl shadow-lg shadow-amber-500/5 relative overflow-hidden;
+}
+
+/* Unified Button System */
+.clm-btn {
+  @apply inline-flex items-center justify-center font-semibold rounded-xl text-xs sm:text-sm px-4 py-2.5 transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer;
+}
+
+.clm-btn-primary {
+  @apply inline-flex items-center justify-center font-semibold rounded-xl text-xs sm:text-sm px-4 py-2.5 transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white shadow-md shadow-blue-500/20 border border-blue-500/30;
+}
+
+.clm-btn-secondary {
+  @apply inline-flex items-center justify-center font-semibold rounded-xl text-xs sm:text-sm px-4 py-2.5 transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer bg-slate-100 hover:bg-slate-200 active:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 dark:active:bg-slate-600 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700;
+}
+
+.clm-btn-outline {
+  @apply inline-flex items-center justify-center font-semibold rounded-xl text-xs sm:text-sm px-4 py-2.5 transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700;
+}
+
+.clm-btn-premium {
+  @apply inline-flex items-center justify-center font-semibold rounded-xl text-xs sm:text-sm px-4 py-2.5 transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer bg-gradient-to-r from-amber-500 via-amber-400 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold shadow-lg shadow-amber-500/20 border border-amber-400/40;
+}
+
+.clm-btn-success {
+  @apply inline-flex items-center justify-center font-semibold rounded-xl text-xs sm:text-sm px-4 py-2.5 transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 border border-emerald-500/30;
+}
+
+.clm-btn-danger {
+  @apply inline-flex items-center justify-center font-semibold rounded-xl text-xs sm:text-sm px-4 py-2.5 transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer bg-rose-600 hover:bg-rose-700 text-white shadow-md shadow-rose-600/20 border border-rose-500/30;
+}
+
+.clm-btn-ghost {
+  @apply inline-flex items-center justify-center font-semibold rounded-xl text-xs sm:text-sm px-4 py-2.5 transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border-0 shadow-none;
+}
+
+/* Unified Badge / Pill System */
+.clm-badge {
+  @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold font-mono leading-none;
+}
+
+.clm-badge-primary {
+  @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold font-mono leading-none bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20;
+}
+
+.clm-badge-success {
+  @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold font-mono leading-none bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20;
+}
+
+.clm-badge-warning {
+  @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold font-mono leading-none bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20;
+}
+
+.clm-badge-danger {
+  @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold font-mono leading-none bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20;
+}
+
+.clm-badge-premium {
+  @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold font-mono leading-none bg-amber-500/20 text-amber-600 dark:text-amber-300 border border-amber-500/30;
+}
+
+.clm-badge-neutral {
+  @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold font-mono leading-none bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700;
+}
+
+/* Unified Form Input Fields */
+.clm-input {
+  @apply w-full bg-white dark:bg-slate-900/90 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all;
+}
+
+/* Typography Hierarchy Helpers */
+.clm-heading-xl {
+  @apply font-display font-extrabold text-3xl sm:text-4xl lg:text-5xl text-slate-900 dark:text-white tracking-tight leading-tight;
+}
+
+.clm-heading-lg {
+  @apply font-display font-bold text-xl sm:text-2xl text-slate-900 dark:text-white tracking-tight leading-snug;
+}
+
+.clm-subheading {
+  @apply font-sans text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.2);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.4);
+}
+
+/* =========================================================================
+   DATA SAVER MODE - Bandwidth & CPU Reduction Styles for Mobile Students
+   ========================================================================= */
+html.data-saver-mode *,
+.data-saver-mode * {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+html.data-saver-mode .animate-spin,
+.data-saver-mode .animate-spin {
+  animation: spin 1s linear infinite !important;
+}
+
+html.data-saver-mode .backdrop-blur-md,
+html.data-saver-mode .backdrop-blur-lg,
+html.data-saver-mode .backdrop-blur-xl,
+html.data-saver-mode .backdrop-blur-2xl,
+.data-saver-mode .backdrop-blur-md,
+.data-saver-mode .backdrop-blur-lg,
+.data-saver-mode .backdrop-blur-xl,
+.data-saver-mode .backdrop-blur-2xl {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html.data-saver-mode .data-saver-hide-heavy-bg {
+  background-image: none !important;
+}
+
+/* =========================================================================
+   ACCESSIBILITY & INCLUSIVE DESIGN SYSTEM (WCAG 2.1 AA / AAA)
+   ========================================================================= */
+
+/* 1. Dynamic Text Sizing */
+html.a11y-font-large {
+  font-size: 112.5%; /* 18px base */
+}
+
+html.a11y-font-xlarge {
+  font-size: 125%; /* 20px base */
+}
+
+/* 2. High Contrast Mode (WCAG AAA) */
+html.a11y-high-contrast {
+  --clm-primary: #1D4ED8;
+  --clm-success: #059669;
+  --clm-warning: #D97706;
+  --clm-error: #DC2626;
+}
+
+html.a11y-high-contrast body {
+  color: #000000 !important;
+  background-color: #FFFFFF !important;
+}
+
+html.a11y-high-contrast.dark body,
+html.a11y-high-contrast .dark {
+  color: #FFFFFF !important;
+  background-color: #000000 !important;
+}
+
+html.a11y-high-contrast .clm-card,
+html.a11y-high-contrast .clm-card-futuristic,
+html.a11y-high-contrast .clm-card-interactive {
+  border: 2px solid #000000 !important;
+  box-shadow: none !important;
+}
+
+html.a11y-high-contrast.dark .clm-card,
+html.a11y-high-contrast.dark .clm-card-futuristic,
+html.a11y-high-contrast.dark .clm-card-interactive {
+  border: 2px solid #FFFFFF !important;
+  background-color: #0A0F1D !important;
+  box-shadow: none !important;
+}
+
+html.a11y-high-contrast button,
+html.a11y-high-contrast a,
+html.a11y-high-contrast input {
+  font-weight: 700 !important;
+}
+
+/* 3. Large Touch Targets (Minimum 44-48px touch bounding box) */
+html.a11y-large-touch button,
+html.a11y-large-touch a[role="button"],
+html.a11y-large-touch input[type="button"],
+html.a11y-large-touch input[type="submit"],
+html.a11y-large-touch .clm-btn {
+  min-height: 48px !important;
+  min-width: 48px !important;
+  padding-left: 1.25rem !important;
+  padding-right: 1.25rem !important;
+  margin-top: 0.125rem !important;
+  margin-bottom: 0.125rem !important;
+}
+
+/* 4. Enhanced Keyboard Focus Rings */
+html.a11y-focus-visible :focus-visible {
+  outline: 3px solid #2563EB !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.25) !important;
+}
+
+html.a11y-high-contrast :focus-visible {
+  outline: 3px solid #F59E0B !important;
+  outline-offset: 3px !important;
+}
+
+/* 5. Enhanced Reading Line Spacing */
+html.a11y-reading-spacing p,
+html.a11y-reading-spacing li,
+html.a11y-reading-spacing span,
+html.a11y-reading-spacing .clm-subheading {
+  line-height: 1.85 !important;
+  letter-spacing: 0.025em !important;
+  word-spacing: 0.05em !important;
+}
+
+/* 6. Reduced Motion & Performance Acceleration */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+html.a11y-reduced-motion *,
+.a11y-reduced-motion * {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
+
+/* Rendering Optimizations for Low CPU & Memory Devices */
+.clm-card,
+.clm-card-interactive,
+.clm-card-futuristic {
+  contain: layout style paint;
+}
+
+.clm-optimized-list {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 400px;
+}
+
+

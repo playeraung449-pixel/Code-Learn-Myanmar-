@@ -1,0 +1,377 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -------------------------------------------------------------
+    // Pillar 1: Global Safety Net (Default-Deny Catch-All)
+    // -------------------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Connection health check for validateFirestoreConnection
+    match /test/{document} {
+      allow read: if true;
+    }
+
+    // -------------------------------------------------------------
+    // global helper functions
+    // -------------------------------------------------------------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return isVerified() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData().role == 'admin';
+    }
+
+    function isTeacher() {
+      return isVerified() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && (getUserData().role == 'teacher' || getUserData().role == 'admin');
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-\\:\\.\\@]+$');
+    }
+
+    // -------------------------------------------------------------
+    // Standalone Validation Blueprints (Pillar 2: Anti-Update-Gap)
+    // -------------------------------------------------------------
+
+    function isValidUser(data) {
+      return data.uid == request.auth.uid
+        && data.fullName is string && data.fullName.size() >= 1 && data.fullName.size() <= 100
+        && data.email is string && data.email.size() <= 100
+        && data.role is string && (data.role == 'student' || data.role == 'teacher' || data.role == 'admin')
+        && (data.bio == null || (data.bio is string && data.bio.size() <= 500))
+        && (data.photo == null || (data.photo is string && data.photo.size() <= 100000)) // fits inline avatars / custom uploaded image base64
+        && (data.preferredLanguage == null || (data.preferredLanguage is string && data.preferredLanguage.size() <= 10))
+        && (data.themePreference == null || (data.themePreference is string && data.themePreference.size() <= 20))
+        && data.xp is int && data.xp >= 0
+        && data.level is int && data.level >= 1 && data.level <= 100;
+    }
+
+    function isValidCourse(data) {
+      return data.courseId is string && data.courseId.size() <= 100
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 150
+        && data.category is string && data.category.size() <= 50
+        && data.difficulty is string && (data.difficulty == 'Beginner' || data.difficulty == 'Intermediate' || data.difficulty == 'Advanced')
+        && data.published is bool;
+    }
+
+    function isValidLesson(data) {
+      return data.lessonId is string && data.lessonId.size() <= 100
+        && data.courseId is string && data.courseId.size() <= 100
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 150
+        && data.lessonNumber is int && data.lessonNumber >= 1;
+    }
+
+    function isValidQuiz(data) {
+      return data.quizId is string && data.quizId.size() <= 100
+        && data.lessonId is string && data.lessonId.size() <= 100
+        && data.questions is list && data.questions.size() <= 50
+        && data.correctAnswers is list && data.correctAnswers.size() <= 50
+        && data.passingScore is int && data.passingScore >= 0;
+    }
+
+    function isValidProject(data) {
+      return data.projectId is string && data.projectId.size() <= 100
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 150
+        && data.description is string && data.description.size() <= 5000
+        && data.difficulty is string && (data.difficulty == 'Beginner' || data.difficulty == 'Intermediate' || data.difficulty == 'Advanced');
+    }
+
+    function isValidAssignment(data) {
+      return data.assignmentId is string && data.assignmentId.size() <= 100
+        && data.uid == request.auth.uid
+        && data.submissionURL is string && data.submissionURL.size() <= 1000
+        && (data.grade == null || (data.grade is string && data.grade.size() <= 10))
+        && (data.feedback == null || (data.feedback is string && data.feedback.size() <= 2000));
+    }
+
+    function isValidProgress(data) {
+      return data.uid == request.auth.uid
+        && data.courseId is string && data.courseId.size() <= 100
+        && data.completedLessons is list && data.completedLessons.size() <= 100
+        && (data.completedLessons.size() == 0 || data.completedLessons[0] is string);
+    }
+
+    function isValidCertificate(data) {
+      return data.certificateId is string && data.certificateId.size() <= 100
+        && data.uid is string && data.uid.size() <= 128
+        && data.courseId is string && data.courseId.size() <= 100
+        && data.courseName is string && data.courseName.size() <= 150
+        && data.issuedDate is string && data.issuedDate.size() <= 50;
+    }
+
+    function isValidBookmark(data) {
+      return data.uid == request.auth.uid
+        && (data.lessonId == null || (data.lessonId is string && data.lessonId.size() <= 100))
+        && (data.projectId == null || (data.projectId is string && data.projectId.size() <= 100))
+        && (data.articleId == null || (data.articleId is string && data.articleId.size() <= 100));
+    }
+
+    function isValidNotification(data) {
+      return data.notificationId is string && data.notificationId.size() <= 100
+        && data.uid == request.auth.uid
+        && data.title is string && data.title.size() <= 150
+        && data.message is string && data.message.size() <= 1000
+        && data.isRead is bool;
+    }
+
+    function isValidForumPost(data) {
+      return data.authorId == request.auth.uid
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 150
+        && data.content is string && data.content.size() >= 1 && data.content.size() <= 3000
+        && data.author is string && data.author.size() <= 100
+        && (data.category == null || (data.category is string && data.category.size() <= 100));
+    }
+
+    function isValidCommunityComment(data) {
+      return data.commentId is string && data.commentId.size() <= 100
+        && data.postId is string && data.postId.size() <= 100
+        && data.authorId == request.auth.uid
+        && data.content is string && data.content.size() >= 1 && data.content.size() <= 1000;
+    }
+
+    function isValidBlog(data) {
+      return data.blogId is string && data.blogId.size() <= 100
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 200
+        && data.content is string && data.content.size() <= 100000;
+    }
+
+    function isValidAIChatHistory(data) {
+      return data.chatId is string && data.chatId.size() <= 100
+        && data.uid == request.auth.uid
+        && data.prompt is string && data.prompt.size() <= 5000
+        && data.response is string && data.response.size() <= 100000;
+    }
+
+    function isValidSetting(data) {
+      return data.settingsId is string && data.settingsId.size() <= 100
+        && (data.maintenanceMode == null || data.maintenanceMode is bool)
+        && (data.announcement == null || (data.announcement is string && data.announcement.size() <= 500));
+    }
+
+    // -------------------------------------------------------------
+    // Collection matches & action enforcements
+    // -------------------------------------------------------------
+
+    // Collection 1: users
+    match /users/{userId} {
+      allow get: if isVerified() && (request.auth.uid == userId || isTeacher());
+      allow list: if isVerified() && (resource.data.uid == request.auth.uid || isTeacher());
+      
+      // Creating a student profile requires verified auth, matching ID, starting as student, and valid payload shape
+      allow create: if isVerified() && request.auth.uid == userId
+                    && isValidUser(incoming())
+                    && incoming().role == 'student'
+                    && incoming().xp <= 500
+                    && incoming().level == 1;
+                    
+      // Updates are restricted to non-immutable fields, incremental value bounds, or by admins
+      allow update: if isVerified() && (
+        (request.auth.uid == userId 
+          && isValidUser(incoming())
+          && incoming().role == existing().role
+          && incoming().uid == existing().uid
+          && incoming().email == existing().email
+          && (!incoming().diff(existing()).affectedKeys().hasAny(['role', 'uid', 'email', 'joinedAt']))
+          && incoming().xp >= existing().xp
+          && (incoming().xp - existing().xp) <= 300 // Max progression delta limit
+          && incoming().level >= existing().level && (incoming().level - existing().level) <= 1
+          && (incoming().coins == null || (incoming().coins - existing().coins <= 300))
+        )
+        || isAdmin()
+      );
+      
+      allow delete: if isAdmin() && isValidId(userId);
+    }
+
+    // Collection 2: courses
+    match /courses/{courseId} {
+      allow read: if true; // Courses can be browsed publicly
+      allow create: if isTeacher() && isValidId(courseId) && isValidCourse(incoming());
+      allow update: if isTeacher() && isValidId(courseId) && isValidCourse(incoming());
+      allow delete: if isAdmin() && isValidId(courseId);
+    }
+
+    // Collection 3: lessons
+    match /lessons/{lessonId} {
+      allow read: if isVerified(); // Learning lessons require registration/verified auth
+      allow create: if isTeacher() && isValidId(lessonId) && isValidLesson(incoming());
+      allow update: if isTeacher() && isValidId(lessonId) && isValidLesson(incoming());
+      allow delete: if isAdmin() && isValidId(lessonId);
+    }
+
+    // Collection 4: quizzes
+    match /quizzes/{quizId} {
+      allow read: if isVerified();
+      allow create: if isTeacher() && isValidId(quizId) && isValidQuiz(incoming());
+      allow update: if isTeacher() && isValidId(quizId) && isValidQuiz(incoming());
+      allow delete: if isAdmin() && isValidId(quizId);
+    }
+
+    // Collection 5: projects
+    match /projects/{projectId} {
+      allow read: if isVerified();
+      allow create: if isTeacher() && isValidId(projectId) && isValidProject(incoming());
+      allow update: if isTeacher() && isValidId(projectId) && isValidProject(incoming());
+      allow delete: if isAdmin() && isValidId(projectId);
+    }
+
+    // Collection 6: assignments
+    match /assignments/{assignmentId} {
+      allow get: if isVerified() && (resource.data.uid == request.auth.uid || isTeacher());
+      allow list: if isVerified() && (resource.data.uid == request.auth.uid || isTeacher());
+      
+      allow create: if isVerified() && isValidId(assignmentId)
+                    && isValidAssignment(incoming())
+                    && incoming().uid == request.auth.uid
+                    && incoming().grade == null
+                    && incoming().feedback == null;
+                    
+      allow update: if isVerified() && isValidId(assignmentId) && (
+        // Action 1: Student edits their submission URL before grading
+        (resource.data.uid == request.auth.uid 
+          && isValidAssignment(incoming())
+          && (!incoming().diff(existing()).affectedKeys().hasAny(['uid', 'grade', 'feedback']))
+          && resource.data.grade == null) // Cannot modify if already graded
+        // Action 2: Teacher grades the submission
+        || (isTeacher() && isValidAssignment(incoming()) && incoming().uid == existing().uid)
+      );
+      
+      allow delete: if isTeacher() && isValidId(assignmentId);
+    }
+
+    // Collection 7: progress
+    match /progress/{progressId} {
+      allow get: if isVerified() && (resource.data.uid == request.auth.uid || isTeacher());
+      allow list: if isVerified() && (resource.data.uid == request.auth.uid || isTeacher());
+      
+      allow create: if isVerified() && isValidId(progressId) && isValidProgress(incoming());
+                    
+      allow update: if isVerified() && isValidId(progressId) && (
+        (resource.data.uid == request.auth.uid 
+          && isValidProgress(incoming())
+          && (!incoming().diff(existing()).affectedKeys().hasAny(['uid', 'courseId'])))
+        || isTeacher()
+      );
+      
+      allow delete: if isAdmin() && isValidId(progressId);
+    }
+
+    // Collection 8: bookmarks
+    match /bookmarks/{bookmarkId} {
+      allow get: if isVerified() && resource.data.uid == request.auth.uid;
+      allow list: if isVerified() && resource.data.uid == request.auth.uid;
+      
+      allow create: if isVerified() && isValidId(bookmarkId) && isValidBookmark(incoming());
+      allow update: if isVerified() && isValidId(bookmarkId) && resource.data.uid == request.auth.uid && isValidBookmark(incoming());
+      allow delete: if isVerified() && isValidId(bookmarkId) && resource.data.uid == request.auth.uid;
+    }
+
+    // Collection 9: certificates
+    match /certificates/{certificateId} {
+      allow get: if isVerified() && (resource.data.uid == request.auth.uid || isTeacher());
+      allow list: if isVerified() && (resource.data.uid == request.auth.uid || isTeacher());
+      
+      allow create: if isTeacher() && isValidId(certificateId) && isValidCertificate(incoming());
+      allow update: if isTeacher() && isValidId(certificateId) && isValidCertificate(incoming());
+      allow delete: if isAdmin() && isValidId(certificateId);
+    }
+
+    // Collection 10: notifications
+    match /notifications/{notificationId} {
+      allow get: if isVerified() && resource.data.uid == request.auth.uid;
+      allow list: if isVerified() && resource.data.uid == request.auth.uid;
+      
+      allow create: if isVerified() && isValidId(notificationId) && isValidNotification(incoming());
+      
+      // Updates are strictly locked to toggling the isRead field only
+      allow update: if isVerified() && isValidId(notificationId) && resource.data.uid == request.auth.uid
+                    && isValidNotification(incoming())
+                    && incoming().diff(existing()).affectedKeys().hasOnly(['isRead']);
+                    
+      allow delete: if isVerified() && isValidId(notificationId) && resource.data.uid == request.auth.uid;
+    }
+
+    // Collection 11: forum_posts (Forum posts)
+    match /forum_posts/{postId} {
+      allow read: if true; // Publicly browsable
+      
+      allow create: if (incoming().authorId == 'system-seed' || (isVerified() && incoming().authorId == request.auth.uid))
+                    && isValidForumPost(incoming());
+                    
+      allow update: if isVerified() && isValidId(postId) && (
+        (resource.data.authorId == request.auth.uid && isValidForumPost(incoming()))
+        // Action: Upvoting / replying updates specific nested arrays/fields
+        || (incoming().diff(existing()).affectedKeys().hasAny(['likes', 'likedBy', 'replies']))
+        || isTeacher()
+      );
+      
+      allow delete: if isVerified() && isValidId(postId) && (resource.data.authorId == request.auth.uid || isTeacher());
+    }
+
+    // Collection 12: community_comments (Post responses)
+    match /community_comments/{commentId} {
+      allow read: if true;
+      
+      allow create: if isVerified() && isValidId(commentId) && isValidCommunityComment(incoming());
+                    
+      allow update: if isVerified() && isValidId(commentId) && (
+        (resource.data.authorId == request.auth.uid && isValidCommunityComment(incoming()))
+        || isTeacher()
+      );
+      
+      allow delete: if isVerified() && isValidId(commentId) && (resource.data.authorId == request.auth.uid || isTeacher());
+    }
+
+    // Collection 13: blogs
+    match /blogs/{blogId} {
+      allow read: if true; // Publicly readable
+      allow create: if isTeacher() && isValidId(blogId) && isValidBlog(incoming());
+      allow update: if isTeacher() && isValidId(blogId) && isValidBlog(incoming());
+      allow delete: if isAdmin() && isValidId(blogId);
+    }
+
+    // Collection 14: ai_chat_history
+    match /ai_chat_history/{chatId} {
+      allow get: if isVerified() && resource.data.uid == request.auth.uid;
+      allow list: if isVerified() && resource.data.uid == request.auth.uid;
+      
+      allow create: if isVerified() && isValidId(chatId) && isValidAIChatHistory(incoming());
+                    
+      allow update: if isVerified() && isValidId(chatId) && resource.data.uid == request.auth.uid
+                    && isValidAIChatHistory(incoming())
+                    && (!incoming().diff(existing()).affectedKeys().hasAny(['uid']));
+                    
+      allow delete: if isVerified() && isValidId(chatId) && resource.data.uid == request.auth.uid;
+    }
+
+    // Collection 15: settings
+    match /settings/{settingsId} {
+      allow read: if true; // Public configuration settings
+      allow write: if isAdmin() && isValidId(settingsId) && isValidSetting(incoming());
+    }
+  }
+}

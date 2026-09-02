@@ -1,0 +1,513 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User account information, role, current XP/level, streaks, coins, and arrays of completed/bookmarked items",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Authentication UID" },
+        "fullName": { "type": "string", "description": "Full name of the user" },
+        "email": { "type": "string", "description": "Email address" },
+        "photoURL": { "type": "string", "description": "URL to profile avatar image" },
+        "bio": { "type": "string", "description": "Short bio/about description" },
+        "role": { "type": "string", "description": "User role: student, teacher, or admin" },
+        "language": { "type": "string", "description": "Selected interface language (e.g., 'my', 'en')" },
+        "theme": { "type": "string", "description": "Selected theme setting (e.g., 'light', 'dark')" },
+        "xp": { "type": "number", "description": "Experience points" },
+        "level": { "type": "number", "description": "Current learning level calculated from XP" },
+        "coins": { "type": "number", "description": "Virtual coins earned through lessons and projects" },
+        "learningStreak": { "type": "number", "description": "Consecutive active learning days streak" },
+        "completedLessons": { "type": "array", "description": "List of lesson IDs completed by user" },
+        "completedCourses": { "type": "array", "description": "List of course IDs completed by user" },
+        "completedProjects": { "type": "array", "description": "List of project IDs completed by user" },
+        "bookmarks": { "type": "array", "description": "List of bookmarks" },
+        "achievements": { "type": "array", "description": "List of achievements unlocked" },
+        "joinedAt": { "type": "string", "description": "Timestamp string of account registration" },
+        "lastLogin": { "type": "string", "description": "Timestamp string of last login session" },
+        "status": { "type": "string", "description": "User status (e.g., active, suspended)" }
+      },
+      "required": ["uid", "fullName", "email", "role", "xp", "level"]
+    },
+    "Course": {
+      "title": "Course",
+      "description": "Metadata for courses on various languages and technologies",
+      "type": "object",
+      "properties": {
+        "courseId": { "type": "string", "description": "Unique course ID" },
+        "title": { "type": "string", "description": "Title of the course" },
+        "description": { "type": "string", "description": "Detailed description in Myanmar/English" },
+        "category": { "type": "string", "description": "Technology category (basics, web, android, backend, etc.)" },
+        "difficulty": { "type": "string", "description": "Difficulty level: Beginner, Intermediate, Advanced" },
+        "thumbnail": { "type": "string", "description": "Course cover thumbnail image URL" },
+        "estimatedHours": { "type": "number", "description": "Estimated time to complete in hours" },
+        "lessonCount": { "type": "number", "description": "Total number of lessons" },
+        "projectCount": { "type": "number", "description": "Total number of projects" },
+        "createdAt": { "type": "string", "description": "Created date timestamp" },
+        "updatedAt": { "type": "string", "description": "Updated date timestamp" },
+        "published": { "type": "boolean", "description": "Whether the course is publicly visible" }
+      },
+      "required": ["courseId", "title", "category", "difficulty", "published"]
+    },
+    "Lesson": {
+      "title": "Lesson",
+      "description": "Learning lessons grouped inside a course containing reading, explanation, exercises, and metadata",
+      "type": "object",
+      "properties": {
+        "lessonId": { "type": "string", "description": "Unique lesson ID" },
+        "courseId": { "type": "string", "description": "Parent course ID" },
+        "title": { "type": "string", "description": "Title of the lesson" },
+        "slug": { "type": "string", "description": "URL slug for navigating" },
+        "level": { "type": "number", "description": "Difficulty or order index level" },
+        "lessonNumber": { "type": "number", "description": "Order number of the lesson" },
+        "content": { "type": "string", "description": "Rich content or markdown explaining the concept" },
+        "codeExample": { "type": "string", "description": "Featured programming code snippet" },
+        "exercise": { "type": "object", "description": "Associated mini programming challenge / exercise details" },
+        "quizId": { "type": "string", "description": "ID of the associated quiz" },
+        "videoURL": { "type": "string", "description": "Optional video tutorial URL" },
+        "estimatedMinutes": { "type": "number", "description": "Time to read and finish in minutes" },
+        "createdAt": { "type": "string", "description": "Created timestamp" },
+        "updatedAt": { "type": "string", "description": "Updated timestamp" }
+      },
+      "required": ["lessonId", "courseId", "title", "lessonNumber"]
+    },
+    "Quiz": {
+      "title": "Quiz",
+      "description": "Interactive multiple choice quiz for testing lesson knowledge",
+      "type": "object",
+      "properties": {
+        "quizId": { "type": "string", "description": "Unique quiz ID" },
+        "courseId": { "type": "string", "description": "Associated course ID" },
+        "lessonId": { "type": "string", "description": "Associated lesson ID" },
+        "questions": { "type": "array", "description": "Array of multiple-choice question objects" },
+        "correctAnswers": { "type": "array", "description": "Array of correct option index numbers" },
+        "passingScore": { "type": "number", "description": "Minimum passing score (e.g. percentage or absolute)" },
+        "createdAt": { "type": "string", "description": "Created timestamp" }
+      },
+      "required": ["quizId", "lessonId", "questions", "correctAnswers", "passingScore"]
+    },
+    "Project": {
+      "title": "Project",
+      "description": "Full mini-project challenges for student workspace practice",
+      "type": "object",
+      "properties": {
+        "projectId": { "type": "string", "description": "Unique project ID" },
+        "courseId": { "type": "string", "description": "Associated course ID" },
+        "title": { "type": "string", "description": "Project title" },
+        "description": { "type": "string", "description": "Project goal and overview" },
+        "difficulty": { "type": "string", "description": "Difficulty level: Beginner, Intermediate, Advanced" },
+        "thumbnail": { "type": "string", "description": "Thumbnail image URL" },
+        "requirements": { "type": "array", "description": "List of project requirements" },
+        "starterFiles": { "type": "array", "description": "Array of code templates or files to begin with" },
+        "solutionFiles": { "type": "array", "description": "Array of correct solution codes or guidelines" },
+        "createdAt": { "type": "string", "description": "Created timestamp" }
+      },
+      "required": ["projectId", "title", "description", "difficulty"]
+    },
+    "Assignment": {
+      "title": "Assignment",
+      "description": "Student homework or assignment submissions for manual/auto evaluation",
+      "type": "object",
+      "properties": {
+        "assignmentId": { "type": "string", "description": "Unique assignment ID" },
+        "uid": { "type": "string", "description": "Firebase Auth UID of the student" },
+        "courseId": { "type": "string", "description": "Associated course ID" },
+        "lessonId": { "type": "string", "description": "Associated lesson ID" },
+        "submissionURL": { "type": "string", "description": "URL to Github repo or file in Storage" },
+        "grade": { "type": "string", "description": "Grade or score given by teacher or system" },
+        "feedback": { "type": "string", "description": "Text feedback from evaluator" },
+        "submittedAt": { "type": "string", "description": "Submitted timestamp" }
+      },
+      "required": ["assignmentId", "uid", "submissionURL", "submittedAt"]
+    },
+    "Progress": {
+      "title": "Progress",
+      "description": "Detailed progress logs for a user inside a specific course",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "courseId": { "type": "string", "description": "Parent course ID" },
+        "completedLessons": { "type": "array", "description": "Array of lesson IDs completed in this course" },
+        "completedProjects": { "type": "array", "description": "Array of project IDs completed in this course" },
+        "quizScore": { "type": "number", "description": "Average quiz score percent in this course" },
+        "xpEarned": { "type": "number", "description": "Total XP earned from this course" },
+        "lastLesson": { "type": "string", "description": "ID of the last lesson viewed" },
+        "lastUpdated": { "type": "string", "description": "Timestamp of last progress update" }
+      },
+      "required": ["uid", "courseId", "completedLessons"]
+    },
+    "Certificate": {
+      "title": "Certificate",
+      "description": "Course graduation credentials verified with unique ID",
+      "type": "object",
+      "properties": {
+        "certificateId": { "type": "string", "description": "Unique verification certificate ID" },
+        "uid": { "type": "string", "description": "UID of recipient student" },
+        "courseId": { "type": "string", "description": "Completed course ID" },
+        "courseName": { "type": "string", "description": "Completed course name" },
+        "issuedDate": { "type": "string", "description": "Date of issuance" },
+        "certificateURL": { "type": "string", "description": "URL to downloadable PDF/image in Storage" }
+      },
+      "required": ["certificateId", "uid", "courseId", "courseName", "issuedDate"]
+    },
+    "Bookmark": {
+      "title": "Bookmark",
+      "description": "Student bookmarked items like lessons, projects, or blog articles for quick access",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "UID of the bookmark owner" },
+        "lessonId": { "type": "string", "description": "Optional lesson ID" },
+        "projectId": { "type": "string", "description": "Optional project ID" },
+        "articleId": { "type": "string", "description": "Optional blog article ID" },
+        "savedAt": { "type": "string", "description": "Saved timestamp" }
+      },
+      "required": ["uid", "savedAt"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "In-app alert for user XP achievements, system messages, or peer feedback",
+      "type": "object",
+      "properties": {
+        "notificationId": { "type": "string", "description": "Unique notification ID" },
+        "uid": { "type": "string", "description": "UID of recipient student" },
+        "title": { "type": "string", "description": "Notification short alert header" },
+        "message": { "type": "string", "description": "Detailed text content" },
+        "type": { "type": "string", "description": "Type: info, achievement, alert, comment" },
+        "isRead": { "type": "boolean", "description": "Read state flag" },
+        "createdAt": { "type": "string", "description": "Created timestamp" }
+      },
+      "required": ["notificationId", "uid", "title", "message", "isRead", "createdAt"]
+    },
+    "CommunityPost": {
+      "title": "Community Post",
+      "description": "Public community group forum posts created by users",
+      "type": "object",
+      "properties": {
+        "postId": { "type": "string", "description": "Unique post ID" },
+        "title": { "type": "string", "description": "Post title/question" },
+        "content": { "type": "string", "description": "Detailed text or code description" },
+        "author": { "type": "string", "description": "Author full name" },
+        "authorId": { "type": "string", "description": "UID of post creator" },
+        "date": { "type": "string", "description": "Display friendly formatted date string" },
+        "likes": { "type": "number", "description": "Number of positive upvotes" },
+        "likedBy": { "type": "array", "description": "UID list of upvoters to prevent double voting" },
+        "category": { "type": "string", "description": "Community category tags" },
+        "createdAt": { "type": "string", "description": "ISO timestamp" }
+      },
+      "required": ["postId", "title", "content", "authorId", "createdAt"]
+    },
+    "CommunityComment": {
+      "title": "Community Comment",
+      "description": "Replies and comment threads associated with a CommunityPost",
+      "type": "object",
+      "properties": {
+        "commentId": { "type": "string", "description": "Unique comment ID" },
+        "postId": { "type": "string", "description": "Parent forum post ID" },
+        "author": { "type": "string", "description": "Author full name" },
+        "authorId": { "type": "string", "description": "UID of comment creator" },
+        "content": { "type": "string", "description": "Comment reply message" },
+        "createdAt": { "type": "string", "description": "ISO timestamp" }
+      },
+      "required": ["commentId", "postId", "authorId", "content", "createdAt"]
+    },
+    "Blog": {
+      "title": "Blog",
+      "description": "Public tutorials, tech career insights, and informational guides published by teachers/admins",
+      "type": "object",
+      "properties": {
+        "blogId": { "type": "string", "description": "Unique blog ID" },
+        "title": { "type": "string", "description": "Blog title" },
+        "thumbnail": { "type": "string", "description": "Cover thumbnail image URL" },
+        "content": { "type": "string", "description": "Detailed blog post text" },
+        "author": { "type": "string", "description": "Author display name" },
+        "tags": { "type": "array", "description": "List of tags (e.g., frontend, career)" },
+        "createdAt": { "type": "string", "description": "Creation timestamp" }
+      },
+      "required": ["blogId", "title", "content", "author", "createdAt"]
+    },
+    "AIChatHistory": {
+      "title": "AI Chat History",
+      "description": "Stored prompts and smart replies with AI Assistant to preserve student chat history",
+      "type": "object",
+      "properties": {
+        "chatId": { "type": "string", "description": "Unique chat session ID" },
+        "uid": { "type": "string", "description": "Student UID" },
+        "prompt": { "type": "string", "description": "Question asked to Gemini AI" },
+        "response": { "type": "string", "description": "AI reply response" },
+        "createdAt": { "type": "string", "description": "Creation timestamp" }
+      },
+      "required": ["chatId", "uid", "prompt", "response", "createdAt"]
+    },
+    "Setting": {
+      "title": "Setting",
+      "description": "Global config and application presets",
+      "type": "object",
+      "properties": {
+        "settingsId": { "type": "string", "description": "Specific settings category ID" },
+        "maintenanceMode": { "type": "boolean", "description": "Flag to shut off writing for maintenance" },
+        "announcement": { "type": "string", "description": "Marquee banner message text to display" },
+        "kpayNumber": { "type": "string", "description": "Admin Configured KBZPay Account Number" },
+        "kpayName": { "type": "string", "description": "Admin Configured KBZPay Account Owner Name" },
+        "waveNumber": { "type": "string", "description": "Admin Configured WaveMoney Account Number" },
+        "waveName": { "type": "string", "description": "Admin Configured WaveMoney Account Owner Name" }
+      },
+      "required": ["settingsId"]
+    },
+    "PaymentRequest": {
+      "title": "Payment Request",
+      "description": "Manual payment requests submitted by users for premium activation",
+      "type": "object",
+      "properties": {
+        "requestId": { "type": "string", "description": "Unique Request ID" },
+        "uid": { "type": "string", "description": "User Auth UID" },
+        "userEmail": { "type": "string", "description": "Student Email address" },
+        "userName": { "type": "string", "description": "Student Display name" },
+        "planId": { "type": "string", "description": "Selected premium plan (e.g. monthly, six_months, lifetime)" },
+        "screenshot": { "type": "string", "description": "Base64 encoded payment slip receipt image" },
+        "transactionRef": { "type": "string", "description": "Optional transaction reference or TXID" },
+        "status": { "type": "string", "description": "Status of the payment: pending, approved, rejected" },
+        "notes": { "type": "string", "description": "Admin notes regarding approval or rejection" },
+        "submittedAt": { "type": "string", "description": "Timestamp when payment was submitted" },
+        "reviewedAt": { "type": "string", "description": "Timestamp when admin reviewed payment" }
+      },
+      "required": ["requestId", "uid", "planId", "status", "submittedAt"]
+    },
+    "AssessmentQuestion": {
+      "title": "Assessment Question",
+      "description": "Custom questions of multiple types managed by teachers/admins",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique question ID" },
+        "type": { "type": "string", "description": "mc, ma, tf, fitb, prediction, find_error, or coding" },
+        "question": { "type": "string", "description": "Question description in Myanmar" },
+        "codeSnippet": { "type": "string", "description": "Optional syntax-highlighted code block" },
+        "options": { "type": "array", "description": "List of string choices for mc/ma questions" },
+        "correctOptionIndex": { "type": "number", "description": "Index of correct option for mc/tf" },
+        "correctOptionIndices": { "type": "array", "description": "Indices of correct choices for ma" },
+        "correctAnswer": { "type": "string", "description": "Correct text answer for fitb/prediction/find_error/coding" },
+        "explanation": { "type": "string", "description": "Myanmar conceptual breakdown/explanation" },
+        "referenceLesson": { "type": "string", "description": "Associated lesson reference ID" }
+      },
+      "required": ["id", "type", "question", "explanation"]
+    },
+    "AssessmentAttempt": {
+      "title": "Assessment Attempt",
+      "description": "Student quiz, module assessment, or course final assessment attempt records",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique attempt ID" },
+        "uid": { "type": "string", "description": "Student UID" },
+        "userEmail": { "type": "string", "description": "Student email" },
+        "userName": { "type": "string", "description": "Student display name" },
+        "assessmentId": { "type": "string", "description": "Lesson ID, Module slug, or Course ID" },
+        "assessmentTitle": { "type": "string", "description": "Title of the assessment completed" },
+        "assessmentType": { "type": "string", "description": "lesson_quiz, module_assessment, or final_assessment" },
+        "courseId": { "type": "string", "description": "Associated course ID" },
+        "courseTitle": { "type": "string", "description": "Associated course Title" },
+        "score": { "type": "number", "description": "Correct answers count scored" },
+        "totalQuestions": { "type": "number", "description": "Total questions in the assessment" },
+        "passed": { "type": "boolean", "description": "Passed state threshold flag" },
+        "passingScore": { "type": "number", "description": "Minimum score percentage required to pass" },
+        "timeSpentSeconds": { "type": "number", "description": "Completion time in seconds" },
+        "timestamp": { "type": "string", "description": "Completion date time string" }
+      },
+      "required": ["id", "uid", "assessmentId", "score", "totalQuestions", "passed", "timestamp"]
+    },
+    "AssessmentSettings": {
+      "title": "Assessment Settings",
+      "description": "Configurable parameters like passing scores and XP rewards for assessments",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique settings ID" },
+        "passingScorePercent": { "type": "number", "description": "Configurable passing percentage (e.g., 60, 70, 80)" },
+        "xpReward": { "type": "number", "description": "Assigned experience points bonus reward" }
+      },
+      "required": ["id", "passingScorePercent", "xpReward"]
+    },
+    "PersonalNote": {
+      "title": "Personal Note",
+      "description": "Student created personal lesson, module, course, or generic note with pinning and tags",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique note ID" },
+        "uid": { "type": "string", "description": "UID of the student who created the note" },
+        "title": { "type": "string", "description": "Note title" },
+        "content": { "type": "string", "description": "Note rich content in markdown/text" },
+        "category": { "type": "string", "description": "Category of note: Lesson, Module, Course, Project, Assignment, Quiz, General" },
+        "associatedId": { "type": "string", "description": "Optional associated resource ID" },
+        "associatedTitle": { "type": "string", "description": "Optional associated resource title" },
+        "isPinned": { "type": "boolean", "description": "Whether note is pinned to top" },
+        "tags": { "type": "array", "description": "List of custom tags" },
+        "createdAt": { "type": "string", "description": "Timestamp when note was created" },
+        "updatedAt": { "type": "string", "description": "Timestamp when note was last updated" }
+      },
+      "required": ["id", "uid", "title", "content", "category", "createdAt", "updatedAt"]
+    },
+    "SavedCodeSnippet": {
+      "title": "Saved Code Snippet",
+      "description": "Student saved reusable programming code snippets with language metadata",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique snippet ID" },
+        "uid": { "type": "string", "description": "UID of the student who saved the snippet" },
+        "title": { "type": "string", "description": "Code snippet title" },
+        "description": { "type": "string", "description": "Short explanation of the snippet" },
+        "code": { "type": "string", "description": "Raw source code snippet" },
+        "language": { "type": "string", "description": "Programming language (HTML, CSS, JavaScript, Java, Kotlin, Firebase Examples)" },
+        "createdAt": { "type": "string", "description": "Timestamp when snippet was saved" }
+      },
+      "required": ["id", "uid", "title", "code", "language", "createdAt"]
+    },
+    "PlatformStats": {
+      "title": "Platform Stats",
+      "description": "Public aggregated metadata counter for platform statistics like total note count",
+      "type": "object",
+      "properties": {
+        "totalNotesCount": { "type": "number", "description": "Platform-wide anonymous notes count" },
+        "totalSnippetsCount": { "type": "number", "description": "Platform-wide anonymous saved snippets count" }
+      }
+    },
+    "PortfolioProject": {
+      "title": "Portfolio Project",
+      "description": "Student created showcase project stored in student portfolio",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique portfolio project ID" },
+        "uid": { "type": "string", "description": "Student UID owner" },
+        "title": { "type": "string", "description": "Title of project" },
+        "description": { "type": "string", "description": "Detailed description of project" },
+        "projectType": { "type": "string", "description": "Mini Project, Final Project, Personal Project, Assignment Showcase" },
+        "difficulty": { "type": "string", "description": "Beginner, Intermediate, Advanced, Professional" },
+        "status": { "type": "string", "description": "Completed, In Progress, Draft" },
+        "completionDate": { "type": "string", "description": "ISO date string or YYYY-MM-DD" },
+        "languages": { "type": "array", "description": "Programming languages used" },
+        "frameworks": { "type": "array", "description": "Frameworks used" },
+        "screenshot": { "type": "string", "description": "Screenshot image base64 or URL" },
+        "thumbnail": { "type": "string", "description": "Thumbnail image base64 or URL" },
+        "githubUrl": { "type": "string", "description": "GitHub repository URL" },
+        "liveDemoUrl": { "type": "string", "description": "Live demo web URL" },
+        "visibility": { "type": "string", "description": "Public or Private" },
+        "studentName": { "type": "string", "description": "Name of student" },
+        "studentEmail": { "type": "string", "description": "Email of student" },
+        "studentPhoto": { "type": "string", "description": "Avatar of student" },
+        "isFeatured": { "type": "boolean", "description": "Featured in public showcase" },
+        "likes": { "type": "number", "description": "Likes count" },
+        "views": { "type": "number", "description": "Views count" },
+        "tags": { "type": "array", "description": "Tags or badges" },
+        "createdAt": { "type": "string", "description": "Created timestamp" },
+        "updatedAt": { "type": "string", "description": "Updated timestamp" }
+      },
+      "required": ["id", "uid", "title", "description", "visibility", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/portfolio_projects/{projectId}": {
+      "schema": "PortfolioProject",
+      "description": "Public and private student portfolio project showcase records"
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Individual profiles containing levels, XP, completed lessons and bookmarks"
+    },
+    "/courses/{courseId}": {
+      "schema": "Course",
+      "description": "Available educational courses and language tracks"
+    },
+    "/lessons/{lessonId}": {
+      "schema": "Lesson",
+      "description": "Individual lessons part of specific courses"
+    },
+    "/quizzes/{quizId}": {
+      "schema": "Quiz",
+      "description": "Multiple choice questions verifying student understanding of lessons"
+    },
+    "/projects/{projectId}": {
+      "schema": "Project",
+      "description": "Workspace coding task guides and starter code templates"
+    },
+    "/assignments/{assignmentId}": {
+      "schema": "Assignment",
+      "description": "Students home study assignment task files and grader evaluations"
+    },
+    "/progress/{progressId}": {
+      "schema": "Progress",
+      "description": "Dedicated collection representing student course completion tracks"
+    },
+    "/certificates/{certificateId}": {
+      "schema": "Certificate",
+      "description": "Graduation certification proofs verifiable externally"
+    },
+    "/bookmarks/{bookmarkId}": {
+      "schema": "Bookmark",
+      "description": "Saved folders or topics for later quick reference"
+    },
+    "/notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "Student custom inbox alerts for achievements and streak updates"
+    },
+    "/community_posts/{postId}": {
+      "schema": "CommunityPost",
+      "description": "Open peer-to-peer student discussion postings"
+    },
+    "/community_comments/{commentId}": {
+      "schema": "CommunityComment",
+      "description": "Discussion comments and responses linked to a specific post"
+    },
+    "/blogs/{blogId}": {
+      "schema": "Blog",
+      "description": "Educational news blogs, roadmap guides and guidelines"
+    },
+    "/ai_chat_history/{chatId}": {
+      "schema": "AIChatHistory",
+      "description": "Student smart session help histories with AI chatbot"
+    },
+    "/settings/{settingsId}": {
+      "schema": "Setting",
+      "description": "Global application properties and presets"
+    },
+    "/payment_requests/{requestId}": {
+      "schema": "PaymentRequest",
+      "description": "Premium membership manual transfer payment requests"
+    },
+    "/assessment_attempts/{attemptId}": {
+      "schema": "AssessmentAttempt",
+      "description": "Records of quiz, module, and final assessments completed by students"
+    },
+    "/assessment_settings/{settingsId}": {
+      "schema": "AssessmentSettings",
+      "description": "Configurable thresholds and incentives for specific assessments"
+    },
+    "/custom_questions/{questionId}": {
+      "schema": "AssessmentQuestion",
+      "description": "Custom questions added or modified dynamically by administrators"
+    },
+    "/personal_notes/{noteId}": {
+      "schema": "PersonalNote",
+      "description": "Private student-authored notes synchronized via cloud database"
+    },
+    "/saved_snippets/{snippetId}": {
+      "schema": "SavedCodeSnippet",
+      "description": "Private student-authored snippets synchronized via cloud database"
+    },
+    "/platform_stats/{statId}": {
+      "schema": "PlatformStats",
+      "description": "Public anonymous counters to show aggregated statistics for admins"
+    },
+    "/announcements/{announcementId}": {
+      "schema": "AdminAnnouncementItem",
+      "description": "Platform broadcast and targeted announcements"
+    },
+    "/community_reports/{reportId}": {
+      "schema": "CommunityReport",
+      "description": "Community moderation reports submitted by users"
+    },
+    "/community_categories/{categoryId}": {
+      "schema": "CommunityCategoryItem",
+      "description": "Configurable community forum categories"
+    },
+    "/moderation_audit_logs/{logId}": {
+      "schema": "ModerationAuditLog",
+      "description": "Administrative audit trail of moderation and communication actions"
+    }
+  }
+}
+

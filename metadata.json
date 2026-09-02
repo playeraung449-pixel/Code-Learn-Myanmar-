@@ -1,0 +1,8 @@
+{
+  "name": "Remix Code Learn Myanmar",
+  "description": "A premium Myanmar coding platform teaching beginners to become professional developers through comprehensive lessons, real-world projects, and AI assistance.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

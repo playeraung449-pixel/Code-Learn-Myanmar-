@@ -1,0 +1,279 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. Global Default-Deny Catch-All Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Connection health check for validateFirestoreConnection
+    match /test/{document} {
+      allow read: if true;
+    }
+
+    // -------------------------------------------------------------
+    // Global Helper Functions
+    // -------------------------------------------------------------
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    // Auth tokens never contain trusted custom claims, look up role in users database collection
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData().role == 'admin';
+    }
+
+    function isTeacher() {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && (getUserData().role == 'teacher' || getUserData().role == 'admin');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-\\:\\.\\@]+$');
+    }
+
+    // -------------------------------------------------------------
+    // Collection 1: users
+    // -------------------------------------------------------------
+    match /users/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId || isTeacher());
+      allow list: if isSignedIn() && (resource.data.uid == request.auth.uid || isTeacher());
+      
+      // Allow registration of new user with default student privileges
+      allow create: if isSignedIn() && request.auth.uid == userId 
+                    && incoming().uid == request.auth.uid
+                    && incoming().role == 'student'
+                    && incoming().fullName is string && incoming().fullName.size() <= 100
+                    && incoming().email is string && incoming().email.size() <= 100
+                    && incoming().xp <= 500
+                    && incoming().level >= 1 && incoming().level <= 3;
+                    
+      // Prevent changing immutable properties, self-privilege escalation, and validate XP progression
+      allow update: if isSignedIn() && (
+        (request.auth.uid == userId 
+          && request.auth.token.email_verified == true
+          && incoming().role == existing().role
+          && incoming().uid == existing().uid
+          && incoming().email == existing().email
+          && (!incoming().diff(existing()).affectedKeys().hasAny(['role', 'uid', 'email', 'joinedAt']))
+          && incoming().xp >= existing().xp
+          && (incoming().xp - existing().xp) <= 300
+          && incoming().level >= existing().level && (incoming().level - existing().level) <= 1
+          && (incoming().coins == null || (incoming().coins - existing().coins <= 300))
+        )
+        || isAdmin()
+      );
+      
+      allow delete: if isAdmin();
+    }
+
+    // -------------------------------------------------------------
+    // Collection 2: courses
+    // -------------------------------------------------------------
+    match /courses/{courseId} {
+      allow read: if true; // Courses can be browsed publicly
+      allow create, update: if isTeacher() && isValidId(courseId)
+                            && incoming().title is string && incoming().title.size() <= 150;
+      allow delete: if isAdmin();
+    }
+
+    // -------------------------------------------------------------
+    // Collection 3: lessons
+    // -------------------------------------------------------------
+    match /lessons/{lessonId} {
+      allow read: if isSignedIn(); // Learning lessons require registration/auth
+      allow create, update: if isTeacher() && isValidId(lessonId)
+                            && incoming().title is string && incoming().title.size() <= 150;
+      allow delete: if isAdmin();
+    }
+
+    // -------------------------------------------------------------
+    // Collection 4: quizzes
+    // -------------------------------------------------------------
+    match /quizzes/{quizId} {
+      allow read: if isSignedIn();
+      allow create, update: if isTeacher() && isValidId(quizId);
+      allow delete: if isAdmin();
+    }
+
+    // -------------------------------------------------------------
+    // Collection 5: projects
+    // -------------------------------------------------------------
+    match /projects/{projectId} {
+      allow read: if isSignedIn();
+      allow create, update: if isTeacher() && isValidId(projectId)
+                            && incoming().title is string && incoming().title.size() <= 150;
+      allow delete: if isAdmin();
+    }
+
+    // -------------------------------------------------------------
+    // Collection 6: assignments
+    // -------------------------------------------------------------
+    match /assignments/{assignmentId} {
+      allow get: if isSignedIn() && (resource.data.uid == request.auth.uid || isTeacher());
+      allow list: if isSignedIn() && (resource.data.uid == request.auth.uid || isTeacher());
+      
+      allow create: if isSignedIn() && isValidId(assignmentId)
+                    && incoming().uid == request.auth.uid
+                    && incoming().submissionURL is string && incoming().submissionURL.size() <= 500;
+                    
+      allow update: if isSignedIn() && (
+        (resource.data.uid == request.auth.uid && (!incoming().diff(existing()).affectedKeys().hasAny(['uid', 'grade', 'feedback'])))
+        || isTeacher()
+      );
+      
+      allow delete: if isTeacher();
+    }
+
+    // -------------------------------------------------------------
+    // Collection 7: progress
+    // -------------------------------------------------------------
+    match /progress/{progressId} {
+      allow get: if isSignedIn() && (resource.data.uid == request.auth.uid || isTeacher());
+      allow list: if isSignedIn() && (resource.data.uid == request.auth.uid || isTeacher());
+      
+      allow create: if isSignedIn() && isValidId(progressId)
+                    && incoming().uid == request.auth.uid;
+                    
+      allow update: if isSignedIn() && (
+        (resource.data.uid == request.auth.uid && (!incoming().diff(existing()).affectedKeys().hasAny(['uid', 'courseId'])))
+        || isTeacher()
+      );
+      
+      allow delete: if isAdmin();
+    }
+
+    // -------------------------------------------------------------
+    // Collection 8: bookmarks
+    // -------------------------------------------------------------
+    match /bookmarks/{bookmarkId} {
+      allow get: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.uid == request.auth.uid;
+      
+      allow create: if isSignedIn() && isValidId(bookmarkId)
+                    && incoming().uid == request.auth.uid;
+                    
+      allow update: if isSignedIn() && resource.data.uid == request.auth.uid 
+                    && (!incoming().diff(existing()).affectedKeys().hasAny(['uid']));
+                    
+      allow delete: if isSignedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    // -------------------------------------------------------------
+    // Collection 9: certificates
+    // -------------------------------------------------------------
+    match /certificates/{certificateId} {
+      allow get: if isSignedIn() && (resource.data.uid == request.auth.uid || isTeacher());
+      allow list: if isSignedIn() && (resource.data.uid == request.auth.uid || isTeacher());
+      
+      allow create, update: if isTeacher() && isValidId(certificateId)
+                            && incoming().uid is string;
+      allow delete: if isAdmin();
+    }
+
+    // -------------------------------------------------------------
+    // Collection 10: notifications
+    // -------------------------------------------------------------
+    match /notifications/{notificationId} {
+      allow get: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.uid == request.auth.uid;
+      
+      allow create: if isSignedIn() && isValidId(notificationId);
+      
+      allow update: if isSignedIn() && resource.data.uid == request.auth.uid
+                    && incoming().diff(existing()).affectedKeys().hasOnly(['isRead']);
+                    
+      allow delete: if isSignedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    // -------------------------------------------------------------
+    // Collection 11: forum_posts (Forum posts)
+    // -------------------------------------------------------------
+    match /forum_posts/{postId} {
+      allow read: if true;
+      
+      allow create: if isSignedIn() && isValidId(postId)
+                    && incoming().authorId == request.auth.uid
+                    && incoming().title is string && incoming().title.size() <= 200
+                    && incoming().content is string && incoming().content.size() <= 5000;
+                    
+      allow update: if isSignedIn() && (
+        (resource.data.authorId == request.auth.uid && (!incoming().diff(existing()).affectedKeys().hasAny(['authorId', 'createdAt'])))
+        || (incoming().diff(existing()).affectedKeys().hasOnly(['likes', 'likedBy', 'replies'])) // Allow upvotes/likes/replies from any user
+        || isTeacher()
+      );
+      
+      allow delete: if isSignedIn() && (resource.data.authorId == request.auth.uid || isTeacher());
+    }
+
+    // -------------------------------------------------------------
+    // Collection 12: community_comments (Post responses)
+    // -------------------------------------------------------------
+    match /community_comments/{commentId} {
+      allow read: if true;
+      
+      allow create: if isSignedIn() && isValidId(commentId)
+                    && incoming().authorId == request.auth.uid
+                    && incoming().content is string && incoming().content.size() <= 2000;
+                    
+      allow update: if isSignedIn() && (
+        (resource.data.authorId == request.auth.uid && (!incoming().diff(existing()).affectedKeys().hasAny(['authorId', 'postId', 'createdAt'])))
+        || isTeacher()
+      );
+      
+      allow delete: if isSignedIn() && (resource.data.authorId == request.auth.uid || isTeacher());
+    }
+
+    // -------------------------------------------------------------
+    // Collection 13: blogs
+    // -------------------------------------------------------------
+    match /blogs/{blogId} {
+      allow read: if true; // News blog articles can be viewed publicly
+      allow create, update: if isTeacher() && isValidId(blogId)
+                            && incoming().title is string && incoming().title.size() <= 200;
+      allow delete: if isAdmin();
+    }
+
+    // -------------------------------------------------------------
+    // Collection 14: ai_chat_history
+    // -------------------------------------------------------------
+    match /ai_chat_history/{chatId} {
+      allow get: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.uid == request.auth.uid;
+      
+      allow create: if isSignedIn() && isValidId(chatId)
+                    && incoming().uid == request.auth.uid
+                    && incoming().prompt is string && incoming().prompt.size() <= 5000;
+                    
+      allow update: if isSignedIn() && resource.data.uid == request.auth.uid
+                    && (!incoming().diff(existing()).affectedKeys().hasAny(['uid']));
+                    
+      allow delete: if isSignedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    // -------------------------------------------------------------
+    // Collection 15: settings
+    // -------------------------------------------------------------
+    match /settings/{settingsId} {
+      allow read: if true; // Public config / settings
+      allow write: if isAdmin() && isValidId(settingsId);
+    }
+  }
+}
